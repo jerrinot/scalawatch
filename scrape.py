@@ -140,80 +140,290 @@ def generate_report(all_data):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ScalaWatch - Monitor volných kanceláří</title>
+<title>ScalaWatch - Volné kanceláře</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Spectral:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+:root {{
+  --ink: #1b1e27;
+  --muted: #566074;
+  --accent: #e4572e;
+  --accent-soft: rgba(228, 87, 46, 0.12);
+  --jade: #2d936c;
+  --sky: #3a7ca5;
+  --panel: rgba(255, 255, 255, 0.85);
+  --border: rgba(27, 30, 39, 0.08);
+  --shadow: 0 18px 50px rgba(19, 27, 45, 0.12);
+}}
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; padding: 20px; max-width: 1100px; margin: 0 auto; }}
-h1 {{ font-size: 1.8em; margin-bottom: 4px; }}
-.subtitle {{ color: #888; margin-bottom: 24px; font-size: 0.95em; }}
-.cards {{ display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }}
-.card {{ background: #fff; border-radius: 8px; padding: 20px; flex: 1; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
-.card h3 {{ margin-bottom: 8px; font-size: 1.1em; }}
-.card .big {{ font-size: 2em; font-weight: bold; }}
-.card .unit {{ color: #888; font-size: 0.9em; }}
-.chart-container {{ background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
-.chart-container h2 {{ margin-bottom: 12px; font-size: 1.2em; }}
-table {{ width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }}
-th, td {{ padding: 10px 14px; text-align: left; border-bottom: 1px solid #eee; }}
-th {{ background: #fafafa; font-weight: 600; font-size: 0.9em; }}
-details {{ margin-bottom: 24px; }}
-summary {{ cursor: pointer; font-weight: 600; font-size: 1.1em; margin-bottom: 8px; }}
-footer {{ text-align: center; color: #aaa; font-size: 0.85em; margin-top: 32px; }}
+body {{
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(58, 124, 165, 0.25), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(45, 147, 108, 0.2), transparent 55%),
+    linear-gradient(180deg, #f6f2ea 0%, #f1f5f7 100%);
+  color: var(--ink);
+  padding: 28px 18px 40px;
+}}
+main {{
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}}
+header {{
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 28px 30px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}}
+header::after {{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(130deg, rgba(228, 87, 46, 0.12), transparent 45%);
+  pointer-events: none;
+}}
+h1 {{
+  font-family: "Spectral", serif;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  margin-bottom: 6px;
+}}
+.subtitle {{
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 720px;
+}}
+.date-pill {{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.95rem;
+}}
+.date-pill span {{
+  color: var(--accent);
+}}
+.cards {{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}}
+.card {{
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 30px rgba(27, 30, 39, 0.08);
+  position: relative;
+  overflow: hidden;
+}}
+.card::before {{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.7), transparent 45%);
+  pointer-events: none;
+}}
+.card h3 {{
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}}
+.metric {{
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}}
+.metric .value {{
+  font-size: 2.2rem;
+  font-weight: 700;
+}}
+.metric .unit {{
+  color: var(--muted);
+  font-size: 0.95rem;
+}}
+.card .hint {{
+  color: var(--muted);
+  font-size: 0.9rem;
+}}
+.panel {{
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}}
+.panel h2 {{
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}}
+.grid {{
+  display: grid;
+  gap: 18px;
+}}
+.grid.two {{
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}}
+details {{
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}}
+summary {{
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 10px;
+}}
+table {{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}}
+th, td {{
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(27, 30, 39, 0.08);
+}}
+th {{
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}}
+tbody tr:hover {{
+  background: rgba(58, 124, 165, 0.06);
+}}
+footer {{
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 12px;
+}}
+footer a {{
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(27, 30, 39, 0.3);
+}}
+@media (max-width: 720px) {{
+  header {{
+    padding: 22px;
+  }}
+  .panel {{
+    padding: 18px;
+  }}
+}}
+.fade-in {{
+  animation: fadeIn 0.8s ease both;
+}}
+@keyframes fadeIn {{
+  from {{ opacity: 0; transform: translateY(12px); }}
+  to {{ opacity: 1; transform: translateY(0); }}
+}}
+@media (prefers-reduced-motion: reduce) {{
+  .fade-in {{ animation: none; }}
+}}
 </style>
 </head>
 <body>
-<h1>ScalaWatch</h1>
-<p class="subtitle">Monitor volných kanceláří v domech Scala a Jakub, Brno &mdash; aktualizace: {today_str}</p>
+<main>
+  <header class="fade-in">
+    <h1>ScalaWatch</h1>
+    <p class="subtitle">Přehled volných kanceláří v domech Scala a Jakub v Brně.</p>
+    <div class="date-pill">Poslední aktualizace <span>{today_str}</span></div>
+  </header>
 
-<div class="cards">
-  <div class="card">
-    <h3>Dům SCALA</h3>
-    <span class="big">{current_scala['offices']}</span> <span class="unit">kanceláří</span><br>
-    <span class="big">{current_scala['m2']}</span> <span class="unit">m\u00b2</span>
-  </div>
-  <div class="card">
-    <h3>Dům JAKUB</h3>
-    <span class="big">{current_jakub['offices']}</span> <span class="unit">kanceláří</span><br>
-    <span class="big">{current_jakub['m2']}</span> <span class="unit">m\u00b2</span>
-  </div>
-  <div class="card">
-    <h3>Celkem</h3>
-    <span class="big">{current_scala['offices'] + current_jakub['offices']}</span> <span class="unit">kanceláří</span><br>
-    <span class="big">{current_scala['m2'] + current_jakub['m2']}</span> <span class="unit">m\u00b2</span>
-  </div>
-</div>
+  <section class="cards fade-in">
+    <div class="card">
+      <h3>Dům SCALA</h3>
+      <div class="metric">
+        <span class="value">{current_scala['offices']}</span>
+        <span class="unit">kanceláří</span>
+      </div>
+      <div class="metric">
+        <span class="value">{current_scala['m2']}</span>
+        <span class="unit">m²</span>
+      </div>
+      <div class="hint">Dostupná plocha dnes</div>
+    </div>
+    <div class="card">
+      <h3>Dům JAKUB</h3>
+      <div class="metric">
+        <span class="value">{current_jakub['offices']}</span>
+        <span class="unit">kanceláří</span>
+      </div>
+      <div class="metric">
+        <span class="value">{current_jakub['m2']}</span>
+        <span class="unit">m²</span>
+      </div>
+      <div class="hint">Dostupná plocha dnes</div>
+    </div>
+    <div class="card">
+      <h3>Celkem</h3>
+      <div class="metric">
+        <span class="value">{current_scala['offices'] + current_jakub['offices']}</span>
+        <span class="unit">kanceláří</span>
+      </div>
+      <div class="metric">
+        <span class="value">{current_scala['m2'] + current_jakub['m2']}</span>
+        <span class="unit">m²</span>
+      </div>
+      <div class="hint">Oba domy dohromady</div>
+    </div>
+  </section>
 
-<div class="chart-container">
-  <h2>Dostupná plocha (m\u00b2) v čase</h2>
-  <canvas id="chartM2"></canvas>
-</div>
+  <section class="grid two">
+    <div class="panel fade-in">
+      <h2>Dostupná plocha (m²) v čase</h2>
+      <canvas id="chartM2"></canvas>
+    </div>
+    <div class="panel fade-in">
+      <h2>Počet dostupných kanceláří v čase</h2>
+      <canvas id="chartCount"></canvas>
+    </div>
+  </section>
 
-<div class="chart-container">
-  <h2>Počet dostupných kanceláří v čase</h2>
-  <canvas id="chartCount"></canvas>
-</div>
+  <details class="fade-in">
+    <summary>Historie (všechny dny)</summary>
+    <table>
+    <thead><tr>
+      <th>Datum</th>
+      <th>SCALA kanceláří</th><th>SCALA m²</th>
+      <th>JAKUB kanceláří</th><th>JAKUB m²</th>
+      <th>Celkem kanceláří</th><th>Celkem m²</th>
+    </tr></thead>
+    <tbody>
+    {history_rows}
+    </tbody>
+    </table>
+  </details>
 
-<details>
-  <summary>Historie (všechny dny)</summary>
-  <table>
-  <thead><tr>
-    <th>Datum</th>
-    <th>SCALA kanceláří</th><th>SCALA m\u00b2</th>
-    <th>JAKUB kanceláří</th><th>JAKUB m\u00b2</th>
-    <th>Celkem kanceláří</th><th>Celkem m\u00b2</th>
-  </tr></thead>
-  <tbody>
-  {history_rows}
-  </tbody>
-  </table>
-</details>
-
-<footer>
-  ScalaWatch &mdash; data z <a href="https://www.dumscala.cz/cs/">dumscala.cz</a>
-</footer>
+  <footer>
+    ScalaWatch — data z <a href="https://www.dumscala.cz/cs/">dumscala.cz</a>
+  </footer>
+</main>
 
 <script>
+Chart.defaults.font.family = '"Space Grotesk", system-ui, sans-serif';
+Chart.defaults.color = "#1b1e27";
 const dates = {dates_js};
 const scalaM2 = {scala_m2};
 const jakubM2 = {jakub_m2};
@@ -227,15 +437,18 @@ new Chart(document.getElementById('chartM2'), {{
   data: {{
     labels: dates,
     datasets: [
-      {{ label: 'SCALA m\\u00b2', data: scalaM2, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, tension: 0.2 }},
-      {{ label: 'JAKUB m\\u00b2', data: jakubM2, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.2 }},
-      {{ label: 'Celkem m\\u00b2', data: totalM2, borderColor: '#2ecc71', borderDash: [5, 5], fill: false, tension: 0.2 }},
+      {{ label: 'SCALA m²', data: scalaM2, borderColor: '#e4572e', backgroundColor: 'rgba(228,87,46,0.12)', fill: true, tension: 0.2 }},
+      {{ label: 'JAKUB m²', data: jakubM2, borderColor: '#3a7ca5', backgroundColor: 'rgba(58,124,165,0.12)', fill: true, tension: 0.2 }},
+      {{ label: 'Celkem m²', data: totalM2, borderColor: '#2d936c', borderDash: [5, 5], fill: false, tension: 0.2 }},
     ]
   }},
   options: {{
     responsive: true,
-    plugins: {{ legend: {{ position: 'bottom' }} }},
-    scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'm\\u00b2' }} }} }}
+    plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 12 }} }} }},
+    scales: {{
+      y: {{ beginAtZero: true, grid: {{ color: 'rgba(27, 30, 39, 0.08)' }}, title: {{ display: true, text: 'm²' }} }},
+      x: {{ grid: {{ display: false }} }}
+    }}
   }}
 }});
 
@@ -244,20 +457,24 @@ new Chart(document.getElementById('chartCount'), {{
   data: {{
     labels: dates,
     datasets: [
-      {{ label: 'SCALA', data: scalaCount, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, tension: 0.2 }},
-      {{ label: 'JAKUB', data: jakubCount, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.2 }},
-      {{ label: 'Celkem', data: totalCount, borderColor: '#2ecc71', borderDash: [5, 5], fill: false, tension: 0.2 }},
+      {{ label: 'SCALA', data: scalaCount, borderColor: '#e4572e', backgroundColor: 'rgba(228,87,46,0.12)', fill: true, tension: 0.2 }},
+      {{ label: 'JAKUB', data: jakubCount, borderColor: '#3a7ca5', backgroundColor: 'rgba(58,124,165,0.12)', fill: true, tension: 0.2 }},
+      {{ label: 'Celkem', data: totalCount, borderColor: '#2d936c', borderDash: [5, 5], fill: false, tension: 0.2 }},
     ]
   }},
   options: {{
     responsive: true,
-    plugins: {{ legend: {{ position: 'bottom' }} }},
-    scales: {{ y: {{ beginAtZero: true, title: {{ display: true, text: 'Počet kanceláří' }} }} }}
+    plugins: {{ legend: {{ position: 'bottom', labels: {{ boxWidth: 12 }} }} }},
+    scales: {{
+      y: {{ beginAtZero: true, grid: {{ color: 'rgba(27, 30, 39, 0.08)' }}, title: {{ display: true, text: 'Počet kanceláří' }} }},
+      x: {{ grid: {{ display: false }} }}
+    }}
   }}
 }});
 </script>
 </body>
 </html>"""
+
 
     with open(HTML_PATH, "w") as f:
         f.write(html)
@@ -273,9 +490,6 @@ def main():
         print(f"Saved to {CSV_PATH}")
     else:
         print("Scrape failed; leaving existing data unchanged")
-
-    all_data = read_csv()
-    generate_report(all_data)
 
 
 if __name__ == "__main__":
