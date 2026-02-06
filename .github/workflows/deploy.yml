@@ -31,7 +31,9 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: python -c "from scrape import read_csv, generate_report; generate_report(read_csv())"
+      - run: |
+          python -c "from scrape import read_csv, generate_report; generate_report(read_csv())"
+          echo 'scala.jerrinot.info' > docs/CNAME
 
       - uses: actions/configure-pages@v5
 
